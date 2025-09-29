@@ -68,11 +68,12 @@ export default function CadastroPage() {
 
     try {
       // Primeiro, criar o usuário
+      // backend espera o campo `senhaHash` no modelo Usuario, então enviamos a senha no campo senhaHash
       const dadosUsuario = {
         nome: formData.nome,
         login: formData.login,
         email: formData.email,
-        senha: formData.senha
+        senhaHash: formData.senha
       };
 
       const responseUsuario = await fetch('http://localhost:3333/usuarios', {

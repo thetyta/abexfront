@@ -3,12 +3,7 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Forçar fundo branco em todas as páginas */
 
 html,
 body {
@@ -35,11 +30,7 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
-}
+html, body { background: #ffffff !important; color-scheme: light; }
 
 /* Estilos personalizados para o sistema */
 .container {

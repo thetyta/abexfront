@@ -30,8 +30,10 @@ export default function LoginPage() {
       const usuarios = await response.json();
       
       // Verificar se existe um usuário com o login e senha fornecidos
+      // Observação: o backend armazena o campo como `senhaHash` (sem criptografia neste projeto),
+      // então comparamos com esse campo.
       const usuario = usuarios.find(u => 
-        u.login === formData.login && u.senha === formData.senha
+        u.login === formData.login && (u.senhaHash === formData.senha || u.senha === formData.senha)
       );
 
       if (usuario) {
