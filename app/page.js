@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toaster } from '../components/ui/toaster'
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -40,12 +41,33 @@ export default function LoginPage() {
         // Salvar o usuário logado no localStorage
         localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
         // Redirecionar para o dashboard
-        router.push('/dashboard');
+        try {
+          toaster.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
+        } catch (e) {
+          if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+            window.__TOASTER.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
+          }
+        }
+        router.push('/projetos');
       } else {
         setError('Login ou senha incorretos');
+        try {
+          toaster.create({ title: 'Erro de login', description: 'Login ou senha incorretos', status: 'error' })
+        } catch (e) {
+          if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+            window.__TOASTER.create({ title: 'Erro de login', description: 'Login ou senha incorretos', status: 'error' })
+          }
+        }
       }
     } catch (err) {
       setError('Erro ao fazer login. Verifique se o servidor está rodando.');
+      try {
+        toaster.create({ title: 'Erro', description: 'Erro ao conectar com o servidor', status: 'error' })
+      } catch (e) {
+        if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+          window.__TOASTER.create({ title: 'Erro', description: 'Erro ao conectar com o servidor', status: 'error' })
+        }
+      }
     } finally {
       setLoading(false);
     }

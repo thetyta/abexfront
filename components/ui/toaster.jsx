@@ -1,43 +1,57 @@
-'use client'
+"use client"
 
-import {
-  Toaster as ChakraToaster,
-  Portal,
-  Spinner,
-  Stack,
-  Toast,
-  createToaster,
-} from '@chakra-ui/react'
+import React, { useEffect, useState } from 'react'
+import { Box, Stack, Text, CloseButton } from '@chakra-ui/react'
 
-export const toaster = createToaster({
-  placement: 'bottom-end',
-  pauseOnPageIdle: true,
-})
+// Simple in-app toaster that doesn't depend on Chakra's `useToast` hook
+export default function Toaster() {
+  const [toasts, setToasts] = useState([])
 
-export const Toaster = () => {
+  useEffect(() => {
+    // expose create API on window
+    if (typeof window !== 'undefined') {
+      window.__TOASTER = window.__TOASTER || {}
+      window.__TOASTER.create = ({ title, description, status = 'info', duration = 4000 }) => {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2,8)}`
+        setToasts((t) => [...t, { id, title, description, status }])
+        // auto-dismiss
+        setTimeout(() => {
+          setToasts((t) => t.filter(x => x.id !== id))
+        }, duration)
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined' && window.__TOASTER) {
+        delete window.__TOASTER.create
+      }
+    }
+  }, [])
+
   return (
-    <Portal>
-      <ChakraToaster toaster={toaster} insetInline={{ mdDown: '4' }}>
-        {(toast) => (
-          <Toast.Root width={{ md: 'sm' }}>
-            {toast.type === 'loading' ? (
-              <Spinner size='sm' color='blue.solid' />
-            ) : (
-              <Toast.Indicator />
-            )}
-            <Stack gap='1' flex='1' maxWidth='100%'>
-              {toast.title && <Toast.Title>{toast.title}</Toast.Title>}
-              {toast.description && (
-                <Toast.Description>{toast.description}</Toast.Description>
-              )}
+    <Box position="fixed" top={4} right={4} zIndex={9999}>
+      <Stack spacing={3}>
+        {toasts.map(toast => (
+          <Box key={toast.id} bg={toast.status === 'error' ? 'red.500' : toast.status === 'success' ? 'green.500' : 'gray.800'} color="white" p={3} borderRadius="md" minW="240px" boxShadow="lg">
+            <Stack direction="row" align="start" justify="space-between">
+              <Box>
+                {toast.title && <Text fontWeight="bold">{toast.title}</Text>}
+                {toast.description && <Text fontSize="sm">{toast.description}</Text>}
+              </Box>
+              <CloseButton onClick={() => setToasts(t => t.filter(x => x.id !== toast.id))} />
             </Stack>
-            {toast.action && (
-              <Toast.ActionTrigger>{toast.action.label}</Toast.ActionTrigger>
-            )}
-            {toast.closable && <Toast.CloseTrigger />}
-          </Toast.Root>
-        )}
-      </ChakraToaster>
-    </Portal>
+          </Box>
+        ))}
+      </Stack>
+    </Box>
   )
+}
+
+export const toaster = {
+  create: (opts) => {
+    if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+      return window.__TOASTER.create(opts)
+    }
+    console.warn('toaster not mounted')
+  }
 }

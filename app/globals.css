@@ -3,6 +3,43 @@
   --foreground: #171717;
 }
 
+/*
+  Font setup: "Alan Sans"
+  Place your font files in: /public/fonts/
+  Recommended filenames (used below):
+    - /public/fonts/AlanSans-Regular.woff2
+    - /public/fonts/AlanSans-Bold.woff2
+
+  If these files are not present the browser will fall back to sans-serif.
+*/
+
+@font-face {
+  font-family: 'Alan Sans';
+  src: url('/fonts/AlanSans-Regular.woff2') format('woff2'),
+       url('/fonts/AlanSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Alan Sans';
+  src: url('/fonts/AlanSans-Bold.woff2') format('woff2'),
+       url('/fonts/AlanSans-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* If you have a variable TTF/OTF, register it with a weight range so browsers can use variable weights */
+@font-face {
+  font-family: 'Alan Sans';
+  src: url('/fonts/AlanSans-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Forçar fundo branco em todas as páginas */
 
 html,
@@ -14,7 +51,7 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Alan Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -38,6 +75,66 @@ html, body { background: #ffffff !important; color-scheme: light; }
   margin: 0 auto;
   padding: 20px;
 }
+
+/* App layout */
+.app-header {
+  background: #0f172a;
+  color: white;
+  padding: 12px 0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.app-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.app-logo { font-weight:700; color: white; text-decoration:none }
+.app-nav a { color: #cbd5e1; margin-left: 16px; text-decoration:none }
+
+.app-main { max-width: 1200px; margin: 20px auto; padding: 0 20px 80px }
+
+/* Projects */
+.project-card { background: white; padding: 16px; border-radius: 10px; box-shadow: 0 6px 18px rgba(2,6,23,0.06); }
+
+/* Make project cards square and layout content */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  aspect-ratio: 1 / 1; /* keeps card square */
+  min-height: 220px; /* fallback for browsers without aspect-ratio */
+}
+
+/* CTA on project card: distinct color from background */
+.project-card .project-cta {
+  background-color: #0ea5a4; /* teal-500 */
+  color: white !important;
+  border: none !important;
+}
+.project-card .project-cta:hover {
+  background-color: #0b9390 !important; /* slightly darker */
+}
+
+/* Kanban */
+.kanban-column { background: #f8fafc; padding: 12px; border-radius: 8px; min-width: 280px }
+.kanban-card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(2,6,23,0.06); margin-bottom: 8px }
+
+/* Improve drag behavior */
+.kanban-column, .kanban-card {
+  touch-action: manipulation; /* reduce touch-scroll conflicts */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* ensure the kanban horizontal scroller doesn't grow vertically unexpectedly */
+.kanban-wrapper { display: flex; align-items: flex-start; gap: 16px; overflow-x: auto; }
 
 .form-container {
   max-width: 400px;

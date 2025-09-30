@@ -1,12 +1,13 @@
-'use client'
+"use client"
 
-import { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Box, HStack, VStack, Heading, Text, Button, Input, IconButton, Spinner, Center } from '@chakra-ui/react'
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable } from '@dnd-kit/core'
 
 export default function KanbanPage({ params }) {
-  const { id } = params
+  // Next.js may pass params as a Promise in new versions — unwrap with React.use()
+  const { id } = React.use(params)
   const [quadro, setQuadro] = useState(null)
   const [colunas, setColunas] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,9 +30,10 @@ export default function KanbanPage({ params }) {
       setQuadro(qData)
 
       // buscar colunas do quadro
-      const cRes = await fetch(`http://localhost:3333/colunas`) // retornará todas
-      let cData = await cRes.json()
-      cData = cData.filter(c => c.quadro_id === qData.id).sort((a,b)=>a.ordem-b.ordem)
+  // fetch only columns for this quadro to reduce payload
+  const cRes = await fetch(`http://localhost:3333/colunas?quadro_id=${qData.id}`)
+  let cData = await cRes.json()
+  cData = Array.isArray(cData) ? cData.sort((a,b)=>a.ordem-b.ordem) : []
 
       // buscar tarefas e agrupar por coluna
       const tRes = await fetch('http://localhost:3333/tarefas')
@@ -51,6 +53,11 @@ export default function KanbanPage({ params }) {
 
   const handleAddColumn = async () => {
     if (!newColName) return
+    // optimistic UI update: add temporary column immediately
+    const tempId = `temp-${Date.now()}`
+    const tempCol = { id: tempId, nome: newColName, ordem: colunas.length, quadro_id: quadro.id, tarefas: [] }
+    setColunas(prev => [...prev, tempCol])
+    setNewColName('')
     try {
       const res = await fetch('http://localhost:3333/colunas', {
         method: 'POST',
@@ -58,9 +65,19 @@ export default function KanbanPage({ params }) {
         body: JSON.stringify({ nome: newColName, ordem: colunas.length, quadro_id: quadro.id })
       })
       const col = await res.json()
-      setColunas(prev => [...prev, { ...col, tarefas: [] }])
-      setNewColName('')
-    } catch (err) { console.error(err) }
+      // replace temp with real
+      setColunas(prev => prev.map(c => c.id === tempId ? { ...col, tarefas: [] } : c))
+    } catch (err) {
+      console.error('Erro ao criar coluna', err)
+      // rollback optimistic update
+      setColunas(prev => prev.filter(c => c.id !== tempId))
+      // optionally show toast (toaster import might be available globally)
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ title: 'Erro', description: 'Falha ao criar coluna', status: 'error' })
+      } else {
+        alert('Falha ao criar coluna')
+      }
+    }
   }
 
   const handleAddCard = async (colId) => {
@@ -76,57 +93,98 @@ export default function KanbanPage({ params }) {
       setColunas(prev => prev.map(c => c.id === colId ? { ...c, tarefas: [...c.tarefas, tarefa] } : c))
     } catch (err) { console.error(err) }
   }
+  // DnD Kit implementation
+  // require a small pointer movement before starting drag to avoid accidental drags that can trigger scrolling
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10 } }))
 
-  const onDragEnd = async (result) => {
-    const { destination, source, draggableId } = result
-    if (!destination) return
-    const srcColIdx = Number(source.droppableId)
-    const dstColIdx = Number(destination.droppableId)
-    if (srcColIdx === dstColIdx && destination.index === source.index) return
+  // prevent body scroll while dragging (fixes infinite auto-scroll when dragging near edges)
+  const scrollRef = useRef({ x: 0, y: 0 })
+  const onDragStart = () => {
+    if (typeof document !== 'undefined') document.body.style.overflow = 'hidden'
+    if (typeof window !== 'undefined') {
+      scrollRef.current = { x: window.scrollX || window.pageXOffset, y: window.scrollY || window.pageYOffset }
+    }
+  }
 
+  // keep resetting the window scroll to the saved position while dragging
+  const onDragMove = () => {
+    if (typeof window !== 'undefined') {
+      const { x, y } = scrollRef.current
+      window.scrollTo(x, y)
+    }
+  }
+
+  const onDragEnd = async (event) => {
+    const { active, over } = event
+    // restore scroll
+    if (typeof document !== 'undefined') document.body.style.overflow = ''
+    if (typeof window !== 'undefined') {
+      const { x, y } = scrollRef.current
+      window.scrollTo(x, y)
+    }
+    if (!over) return
+    const activeId = String(active.id).replace(/^task-/, '')
+    const overId = String(over.id)
+
+    // find source column and task
+    const srcColIdx = colunas.findIndex(c => c.tarefas.some(t => String(t.id) === activeId))
+    if (srcColIdx === -1) return
     const srcCol = colunas[srcColIdx]
-    const dstCol = colunas[dstColIdx]
-    const item = srcCol.tarefas[source.index]
+    const task = srcCol.tarefas.find(t => String(t.id) === activeId)
 
     // remove from source
-    const newSrcTasks = Array.from(srcCol.tarefas)
-    newSrcTasks.splice(source.index,1)
-    // insert into dest
-    const newDstTasks = Array.from(dstCol.tarefas)
-    newDstTasks.splice(destination.index,0,item)
+    let newColunas = colunas.map(c => c.id === srcCol.id ? { ...c, tarefas: c.tarefas.filter(t => String(t.id) !== activeId) } : { ...c, tarefas: [...c.tarefas] })
 
-    const newCols = Array.from(colunas)
-    newCols[srcColIdx] = { ...srcCol, tarefas: newSrcTasks }
-    newCols[dstColIdx] = { ...dstCol, tarefas: newDstTasks }
-    setColunas(newCols)
+    // determine destination
+    let destColIdx = -1
+    let insertIndex = -1
+    if (overId.startsWith('gap-')) {
+      // gap id format: gap-<colId>-<index>
+      const parts = overId.split('-')
+      const colId = parts[1]
+      insertIndex = parseInt(parts[2], 10)
+      destColIdx = newColunas.findIndex(c => String(c.id) === String(colId))
+      if (destColIdx === -1) return
+      newColunas[destColIdx].tarefas.splice(insertIndex, 0, task)
+    } else if (overId.startsWith('task-')) {
+      const overTaskId = overId.replace(/^task-/, '')
+      destColIdx = newColunas.findIndex(c => c.tarefas.some(t => String(t.id) === overTaskId))
+      if (destColIdx === -1) return
+      insertIndex = newColunas[destColIdx].tarefas.findIndex(t => String(t.id) === overTaskId)
+      newColunas[destColIdx].tarefas.splice(insertIndex, 0, task)
+    } else if (overId.startsWith('col-')) {
+      const colId = overId.replace(/^col-/, '')
+      destColIdx = newColunas.findIndex(c => String(c.id) === colId)
+      if (destColIdx === -1) return
+      newColunas[destColIdx].tarefas.push(task)
+    }
 
-    // persist changes: update tarefa coluna_id and posicao
+    setColunas(newColunas)
+
+    // persist changes: update coluna_id and posicao for all tasks (simple approach)
     try {
-      await fetch(`http://localhost:3333/tarefas/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coluna_id: dstCol.id, posicao: destination.index })
-      })
-      // update positions for tasks in dest
-      for (let i=0;i<newCols[dstColIdx].tarefas.length;i++){
-        const t = newCols[dstColIdx].tarefas[i]
-        await fetch(`http://localhost:3333/tarefas/${t.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posicao: i })
-        })
+      for (let ci = 0; ci < newColunas.length; ci++) {
+        const col = newColunas[ci]
+        for (let i = 0; i < col.tarefas.length; i++) {
+          const t = col.tarefas[i]
+          // skip temp ids (e.g., temp-...)
+          if (String(t.id).startsWith('temp-')) continue
+          await fetch(`http://localhost:3333/tarefas/${t.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coluna_id: col.id, posicao: i })
+          })
+        }
       }
-      // update source positions
-      for (let i=0;i<newCols[srcColIdx].tarefas.length;i++){
-        const t = newCols[srcColIdx].tarefas[i]
-        await fetch(`http://localhost:3333/tarefas/${t.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ posicao: i })
-        })
-      }
-    } catch (err) { console.error(err) }
+    } catch (err) { console.error('Erro ao persistir drag:', err) }
   }
+
+  // cleanup if component unmounts while dragging
+  useEffect(() => {
+    return () => {
+      if (typeof document !== 'undefined') document.body.style.overflow = ''
+    }
+  }, [])
 
   if (loading) return <Center p={10}><Spinner /></Center>
 
@@ -140,39 +198,57 @@ export default function KanbanPage({ params }) {
   return (
     <Box p={6}>
       <Heading size="md" mb={4}>{quadro.nome}</Heading>
-      <HStack align="start" spacing={4} overflowX="auto">
-        <DragDropContext onDragEnd={onDragEnd}>
-          {colunas.map((col, idx) => (
-            <Droppable droppableId={String(idx)} key={col.id}>
-              {(provided) => (
-                <VStack ref={provided.innerRef} {...provided.droppableProps} align="stretch" bg="gray.50" p={3} minW="280px" borderRadius="md">
-                    <HStack justify="space-between">
-                    <Heading size="sm">{col.nome}</Heading>
-                    <IconButton aria-label="add" icon={<span style={{fontWeight:600}}>+</span>} size="sm" onClick={() => handleAddCard(col.id)} />
-                  </HStack>
-
-                  {col.tarefas.map((t, i) => (
-                    <Draggable draggableId={String(t.id)} index={i} key={t.id}>
-                      {(prov) => (
-                        <Box ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} bg="white" p={3} borderRadius="md" boxShadow="sm">
-                          <Text fontWeight="bold">{t.nome}</Text>
-                          <Text fontSize="sm" color="gray.600">{t.prioridade}</Text>
-                        </Box>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </VStack>
-              )}
-            </Droppable>
+  <DndContext sensors={sensors} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
+        <HStack align="start" spacing={4} overflowX="auto">
+          {colunas.map((col) => (
+            <Column key={col.id} col={col} onAddCard={() => handleAddCard(col.id)} />
           ))}
-        </DragDropContext>
 
-        <VStack minW="280px">
-          <Input placeholder="Nova coluna" value={newColName} onChange={(e)=>setNewColName(e.target.value)} />
-          <Button onClick={handleAddColumn} colorScheme="teal">Adicionar coluna</Button>
-        </VStack>
+          <VStack minW="280px">
+            <Input placeholder="Nova coluna" value={newColName} onChange={(e)=>setNewColName(e.target.value)} />
+            <Button onClick={handleAddColumn} colorScheme="teal">Adicionar coluna</Button>
+          </VStack>
+        </HStack>
+      </DndContext>
+    </Box>
+  )
+}
+
+function Column({ col, onAddCard }) {
+  const { setNodeRef } = useDroppable({ id: `col-${col.id}` })
+  return (
+    <VStack ref={setNodeRef} align="stretch" className="kanban-column" minW="280px">
+      <HStack justify="space-between">
+        <Heading size="sm">{col.nome}</Heading>
+        <IconButton aria-label="add" icon={<span style={{fontWeight:600}}>+</span>} size="sm" onClick={onAddCard} />
       </HStack>
+      {/* top gap */}
+      <GapDrop key={`gap-${col.id}-0`} id={`gap-${col.id}-0`} />
+      {col.tarefas.map((t, i) => (
+        <React.Fragment key={t.id}>
+          <Task tarefa={t} index={i} />
+          {/* gap after item */}
+          <GapDrop id={`gap-${col.id}-${i+1}`} />
+        </React.Fragment>
+      ))}
+    </VStack>
+  )
+}
+
+function GapDrop({ id }) {
+  const { setNodeRef, isOver } = useDroppable({ id })
+  return (
+    <Box ref={setNodeRef} minH="8px" mb={2} borderRadius="4px" style={{ background: isOver ? 'rgba(14,165,164,0.12)' : 'transparent' }} />
+  )
+}
+
+function Task({ tarefa }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `task-${tarefa.id}` })
+  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined
+  return (
+    <Box ref={setNodeRef} {...attributes} {...listeners} className="kanban-card" style={style} opacity={isDragging ? 0.8 : 1}>
+      <Text fontWeight="bold">{tarefa.nome}</Text>
+      <Text fontSize="sm" color="gray.600">{tarefa.prioridade}</Text>
     </Box>
   )
 }
