@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="preload" href="/fonts/AlanSans-VariableFont_wght.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
-        <link rel="icon" type="image/x-icon" href="/2310700.ico" />
+        <link rel="icon" type="image/x-icon" href="2310700.ico" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { toaster } from '../components/ui/toaster'
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -76,9 +77,7 @@ export default function LoginPage() {
   return (
     <div className="container">
       <div className="form-container">
-        <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
-          Login
-        </h2>
+  <Image src='/logo.png' width={400} height={400} alt='Logo' style={{ display: 'block', margin: '-100px auto' }}/>
         
         {error && <div className="error">{error}</div>}
         

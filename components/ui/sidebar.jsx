@@ -28,7 +28,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <i>◼</i>
-        <span>ABEX</span>
+        <span>TASKCARE</span>
       </div>
 
       <ul className="sidebar-menu">

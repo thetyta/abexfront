@@ -53,13 +53,19 @@ export default function KanbanPage({ params }) {
 
       const qRes = await fetch(`http://localhost:3333/quadros?projeto_id=${id}`);
       let qData = await qRes.json();
-      if (Array.isArray(qData)) qData = qData.find(q => String(q.projeto_id) === String(id)) || qData[0];
+      
+      // Buscar apenas o quadro específico deste projeto
+      if (Array.isArray(qData)) {
+        qData = qData.find(q => String(q.projeto_id) === String(id));
+      }
+      
       if (!qData) {
         setQuadro(null);
         setColunas([]);
         setLoading(false);
         return;
       }
+      
       setQuadro(qData);
       const cRes = await fetch(`http://localhost:3333/colunas?quadro_id=${qData.id}`);
       let cData = await cRes.json();
