@@ -131,18 +131,6 @@ export default function DashboardPage() {
     <div>
       <nav className="navbar">
         <h1>Dashboard - Sistema de Usuários</h1>
-        <div>
-          <span style={{ marginRight: '20px' }}>
-            Olá, {usuarioLogado?.nome}!
-          </span>
-          <button 
-            className="btn btn-secondary" 
-            onClick={handleLogout}
-            style={{ width: 'auto', padding: '8px 16px' }}
-          >
-            Sair
-          </button>
-        </div>
       </nav>
 
       <div className="container">
