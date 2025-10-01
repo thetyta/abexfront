@@ -15,6 +15,10 @@ import {
 import TaskModal from '../../../../components/ui/task-modal';
 import TaskDetailModal from '../../../../components/ui/task-detail-modal';
 import ColaboradoresModal from '../../../../components/ui/colaboradores-modal';
+import EditTaskModal from '../../../../components/ui/edit-task-modal';
+import DeleteColumnModal from '../../../../components/ui/delete-column-modal';
+import DeleteTaskModal from '../../../../components/ui/delete-task-modal';
+import NewColumnModal from '../../../../components/ui/new-column-modal';
 
 // COMPONENTE PRINCIPAL DA PÁGINA
 export default function KanbanPage({ params }) {
@@ -30,6 +34,13 @@ export default function KanbanPage({ params }) {
   const [activeTask, setActiveTask] = useState(null);
   const [showColaboradoresModal, setShowColaboradoresModal] = useState(false);
   const [projeto, setProjeto] = useState(null);
+  const [showEditTask, setShowEditTask] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState(null);
+  const [showDeleteColumn, setShowDeleteColumn] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState(null);
+  const [showDeleteTask, setShowDeleteTask] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [showNewColumnModal, setShowNewColumnModal] = useState(false);
   const router = useRouter();
 
   const fetchQuadro = useCallback(async () => {
@@ -67,23 +78,40 @@ export default function KanbanPage({ params }) {
 
   useEffect(() => { fetchQuadro() }, [fetchQuadro, router]);
 
-  const handleAddColumn = async () => {
-    if (!newColName.trim()) return;
+  const handleAddColumn = async (columnName) => {
+    if (!columnName.trim()) return;
     const optimisticId = `temp-${Date.now()}`;
-    const newColumn = { id: optimisticId, nome: newColName, ordem: colunas.length, quadro_id: quadro.id, tarefas: [] };
+    const newColumn = { id: optimisticId, nome: columnName, ordem: colunas.length, quadro_id: quadro.id, tarefas: [] };
     setColunas(prev => [...prev, newColumn]);
-    setNewColName('');
+    
     try {
       const res = await fetch('http://localhost:3333/colunas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome: newColName, ordem: colunas.length, quadro_id: quadro.id })
+        body: JSON.stringify({ nome: columnName, ordem: colunas.length, quadro_id: quadro.id })
       });
       const createdCol = await res.json();
       setColunas(prev => prev.map(c => c.id === optimisticId ? { ...createdCol, tarefas: [] } : c));
+      
+      // Toaster opcional
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Coluna criada', 
+          description: `Coluna "${columnName}" foi adicionada.`, 
+          status: 'success' 
+        });
+      }
     } catch (err) {
       console.error('Erro ao criar coluna', err);
       setColunas(prev => prev.filter(c => c.id !== optimisticId));
+      
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Erro', 
+          description: 'Não foi possível criar a coluna', 
+          status: 'error' 
+        });
+      }
     }
   };
 
@@ -102,6 +130,97 @@ export default function KanbanPage({ params }) {
       ...col,
       tarefas: col.tarefas.filter(t => t.id !== tarefaId)
     })));
+  };
+
+  const handleEditTask = (tarefa) => {
+    setTaskToEdit(tarefa);
+    setShowTaskDetail(false);
+    setShowEditTask(true);
+  };
+
+  const handleConfirmDeleteTask = (tarefa) => {
+    setTaskToDelete(tarefa);
+    setShowTaskDetail(false);
+    setShowDeleteTask(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    
+    try {
+      const res = await fetch(`http://localhost:3333/tarefas/${taskToDelete.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!res.ok) throw new Error('Erro ao excluir tarefa');
+      
+      // Remover tarefa da UI
+      handleTaskDelete(taskToDelete.id);
+      setShowDeleteTask(false);
+      setTaskToDelete(null);
+      
+      // Toaster opcional
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Tarefa excluída', 
+          description: `Tarefa "${taskToDelete.nome}" foi removida.`, 
+          status: 'success' 
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Erro', 
+          description: 'Não foi possível excluir a tarefa', 
+          status: 'error' 
+        });
+      } else {
+        alert('Não foi possível excluir a tarefa');
+      }
+    }
+  };
+
+  const handleDeleteColumn = (column) => {
+    setColumnToDelete(column);
+    setShowDeleteColumn(true);
+  };
+
+  const confirmDeleteColumn = async () => {
+    if (!columnToDelete) return;
+    
+    try {
+      const res = await fetch(`http://localhost:3333/colunas/${columnToDelete.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!res.ok) throw new Error('Erro ao excluir coluna');
+      
+      // Remover coluna da UI
+      setColunas(prev => prev.filter(c => c.id !== columnToDelete.id));
+      setShowDeleteColumn(false);
+      setColumnToDelete(null);
+      
+      // Toaster opcional
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Coluna excluída', 
+          description: `Coluna "${columnToDelete.nome}" e suas tarefas foram removidas.`, 
+          status: 'success' 
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Erro', 
+          description: 'Não foi possível excluir a coluna', 
+          status: 'error' 
+        });
+      } else {
+        alert('Não foi possível excluir a coluna');
+      }
+    }
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10 } }));
@@ -242,7 +361,12 @@ export default function KanbanPage({ params }) {
               <button className="btn-action secondary" onClick={() => setShowColaboradoresModal(true)}>
                 <i className="fas fa-users"></i> Colaboradores
               </button>
-              <button className="btn-action secondary" onClick={() => { setSelectedColumnId(null); setShowTaskModal(true) }}><i className="fas fa-plus"></i> Nova Tarefa</button>
+              <button className="btn-action secondary" onClick={() => { setSelectedColumnId(null); setShowTaskModal(true) }}>
+                <i className="fas fa-plus"></i> Nova Tarefa
+              </button>
+              <button className="btn-action secondary" onClick={() => { setNewColName(''); setShowNewColumnModal(true) }}>
+                <i className="fas fa-columns"></i> Nova Coluna
+              </button>
             </div>
           </div>
 
@@ -255,18 +379,8 @@ export default function KanbanPage({ params }) {
           >
             <div className="kanban-board">
               {colunas.map((col) => (
-                <Column key={col.id} col={col} onAddCard={() => handleAddCard(col.id)} onTaskClick={handleTaskClick} />
+                <Column key={col.id} col={col} onAddCard={() => handleAddCard(col.id)} onTaskClick={handleTaskClick} onDeleteColumn={() => handleDeleteColumn(col)} />
               ))}
-              <div className="kanban-column" style={{ minHeight: '300px' }}>
-                <div className="kanban-column-header"><h3 className="kanban-column-title"><i className="fas fa-plus"></i> Nova Coluna</h3></div>
-                <div className="kanban-column-content">
-                  <div style={{ marginBottom: '8px', fontSize: '12px', color: '#64748b', textAlign: 'right' }}>
-                    {newColName.length}/255
-                  </div>
-                  <input className="form-input" placeholder="Nome da coluna..." value={newColName} onChange={(e) => setNewColName(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleAddColumn()} maxLength={255} style={{ marginBottom: '12px' }}/>
-                  <button className="btn-action primary" onClick={handleAddColumn} disabled={!newColName.trim()} style={{ width: '100%' }}><i className="fas fa-plus"></i> Adicionar Coluna</button>
-                </div>
-              </div>
             </div>
 
             <DragOverlay>
@@ -276,7 +390,51 @@ export default function KanbanPage({ params }) {
         </div>
         
         <TaskModal isOpen={showTaskModal} onClose={() => setShowTaskModal(false)} colunas={colunas} projetoId={id} onTaskCreated={fetchQuadro} />
-        <TaskDetailModal isOpen={showTaskDetail} onClose={() => setShowTaskDetail(false)} tarefa={selectedTask} onDelete={handleTaskDelete} onTaskUpdated={fetchQuadro} />
+        <TaskDetailModal 
+          isOpen={showTaskDetail} 
+          onClose={() => setShowTaskDetail(false)} 
+          tarefa={selectedTask} 
+          onEdit={handleEditTask}
+          onConfirmDelete={handleConfirmDeleteTask}
+          onTaskUpdated={fetchQuadro} 
+        />
+        <EditTaskModal
+          isOpen={showEditTask}
+          onClose={() => setShowEditTask(false)}
+          tarefa={taskToEdit}
+          colunas={colunas}
+          onTaskUpdated={() => {
+            setShowEditTask(false);
+            fetchQuadro();
+          }}
+        />
+        <DeleteTaskModal
+          isOpen={showDeleteTask}
+          task={taskToDelete}
+          onConfirm={confirmDeleteTask}
+          onCancel={() => {
+            setShowDeleteTask(false);
+            setTaskToDelete(null);
+          }}
+        />
+        <DeleteColumnModal
+          isOpen={showDeleteColumn}
+          column={columnToDelete}
+          onConfirm={confirmDeleteColumn}
+          onCancel={() => {
+            setShowDeleteColumn(false);
+            setColumnToDelete(null);
+          }}
+        />
+        <NewColumnModal
+          isOpen={showNewColumnModal}
+          onClose={() => {
+            setShowNewColumnModal(false);
+            setNewColName('');
+          }}
+          onCreate={handleAddColumn}
+          initialValue={newColName}
+        />
         <ColaboradoresModal 
           isOpen={showColaboradoresModal} 
           onClose={() => setShowColaboradoresModal(false)} 
@@ -293,14 +451,34 @@ export default function KanbanPage({ params }) {
 }
 
 // COMPONENTES AUXILIARES
-function Column({ col, onAddCard, onTaskClick }) {
+function Column({ col, onAddCard, onTaskClick, onDeleteColumn }) {
   const { setNodeRef } = useDroppable({ id: `col-${col.id}` });
   return (
     <div ref={setNodeRef} className="kanban-column">
       <div className="kanban-column-header">
         <h3 className="kanban-column-title">
           {col.nome}
-          <span className="kanban-column-count">{col.tarefas.length}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="kanban-column-count">{col.tarefas.length}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDeleteColumn(); }} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: '#dc2626', 
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#fee2e2'}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+              title="Excluir coluna"
+            >
+              <i className="fas fa-trash"></i>
+            </button>
+          </span>
         </h3>
       </div>
       <div className="kanban-column-content">

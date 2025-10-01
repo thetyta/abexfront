@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDelete }) {
+export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDelete, onConfirmDelete }) {
   const [loading, setLoading] = useState(false)
 
   if (!isOpen || !tarefa) return null
@@ -17,24 +17,10 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`Deseja realmente excluir a tarefa "${tarefa.nome}"?`)) return
-    
-    setLoading(true)
-    try {
-      const response = await fetch(`http://localhost:3333/tarefas/${tarefa.id}`, {
-        method: 'DELETE'
-      })
-      
-      if (!response.ok) throw new Error('Erro ao excluir tarefa')
-      
-      onDelete(tarefa.id)
-      onClose()
-    } catch (err) {
-      console.error(err)
-      alert('Erro ao excluir tarefa')
-    } finally {
-      setLoading(false)
+  const handleDeleteClick = () => {
+    // Apenas dispara o evento para abrir o modal de confirmação
+    if (onConfirmDelete) {
+      onConfirmDelete(tarefa)
     }
   }
 
@@ -119,11 +105,11 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
             </button>
             <button 
               className="btn-action danger"
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               disabled={loading}
             >
               <i className="fas fa-trash"></i>
-              {loading ? 'Excluindo...' : 'Excluir'}
+              Excluir
             </button>
           </div>
         </div>
