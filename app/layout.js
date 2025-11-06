@@ -3,6 +3,7 @@ import "./globals.css";
 import { Provider } from "../components/ui/provider";
 import Toaster from "../components/ui/toaster";
 import Sidebar from "../components/ui/sidebar";
+import ChatBot from "../components/ui/chat-bot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

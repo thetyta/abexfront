@@ -20,6 +20,7 @@ import DeleteColumnModal from '../../../../components/ui/delete-column-modal';
 import DeleteTaskModal from '../../../../components/ui/delete-task-modal';
 import NewColumnModal from '../../../../components/ui/new-column-modal';
 
+
 // COMPONENTE PRINCIPAL DA PÁGINA
 export default function KanbanPage({ params }) {
   const { id } = React.use(params);
@@ -451,6 +452,7 @@ export default function KanbanPage({ params }) {
             setShowColaboradoresModal(false);
           }}
         />
+
       </main>
     </div>
   );

@@ -1,0 +1,179 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  font-family: inherit;
+}
+
+.container h1 {
+  margin-bottom: 30px;
+  color: #333;
+  font-size: 28px;
+}
+
+.info {
+  background: #e8f5e9;
+  border-left: 4px solid #00a650;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 30px;
+}
+
+.info h2 {
+  margin-top: 0;
+  color: #1b5e20;
+  font-size: 18px;
+}
+
+.info ol {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.info li {
+  margin: 8px 0;
+  color: #333;
+}
+
+.section {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #333;
+  font-size: 20px;
+}
+
+.tarefaList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.tarefaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.tarefaItem:hover {
+  border-color: #00a650;
+  background: #f8fafb;
+}
+
+.tarefaItem.active {
+  border-color: #00a650;
+  background: #e8f5e9;
+  box-shadow: 0 2px 8px rgba(0, 166, 80, 0.2);
+}
+
+.tarefaInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.tarefaInfo strong {
+  color: #333;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.tarefaInfo small {
+  color: #999;
+  font-size: 12px;
+}
+
+.tarefaStatus {
+  background: #00a650;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.selectedBox {
+  background: #f0f4ff;
+  border-left: 4px solid #1976d2;
+  padding: 16px;
+  border-radius: 4px;
+  margin: 16px 0;
+}
+
+.selectedBox p {
+  margin: 8px 0;
+  color: #333;
+}
+
+.selectedBox strong {
+  color: #1976d2;
+}
+
+.selectedBox small {
+  display: block;
+  margin-top: 12px;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.selectedBox ul {
+  margin: 10px 0 0 20px;
+  padding: 0;
+}
+
+.selectedBox li {
+  margin: 6px 0;
+  color: #666;
+}
+
+.infoBox {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.infoBox p {
+  margin: 8px 0;
+  color: #333;
+}
+
+.infoBox strong {
+  color: #00a650;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .container h1 {
+    font-size: 24px;
+  }
+
+  .tarefaList {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 16px;
+  }
+}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Chatbot from './chat-bot';
 
 export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDelete, onConfirmDelete }) {
   const [loading, setLoading] = useState(false)
@@ -111,6 +112,7 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
               <i className="fas fa-trash"></i>
               Excluir
             </button>
+            <Chatbot />
           </div>
         </div>
       </div>
