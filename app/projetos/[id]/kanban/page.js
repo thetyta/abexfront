@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../../lib/hooks/useAuth';
 import { 
   DndContext, 
   PointerSensor, 
@@ -23,6 +24,7 @@ import NewColumnModal from '../../../../components/ui/new-column-modal';
 
 // COMPONENTE PRINCIPAL DA PÁGINA
 export default function KanbanPage({ params }) {
+  useAuth() // Verifica autenticação
   const { id } = React.use(params);
   const [quadro, setQuadro] = useState(null);
   const [colunas, setColunas] = useState([]);
@@ -43,6 +45,13 @@ export default function KanbanPage({ params }) {
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [showNewColumnModal, setShowNewColumnModal] = useState(false);
   const router = useRouter();
+
+  // Salva projeto_id no localStorage para o chatbot usar
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem('projeto_id', id);
+    }
+  }, [id]);
 
   const fetchQuadro = useCallback(async () => {
     setLoading(true);

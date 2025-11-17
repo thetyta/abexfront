@@ -27,39 +27,50 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Fazer requisição para o backend para verificar o login
-      const response = await fetch('http://localhost:3333/usuarios');
-      const usuarios = await response.json();
-      
-      // Verificar se existe um usuário com o login e senha fornecidos
-      // Observação: o backend armazena o campo como `senhaHash` (sem criptografia neste projeto),
-      // então comparamos com esse campo.
-      const usuario = usuarios.find(u => 
-        u.login === formData.login && (u.senhaHash === formData.senha || u.senha === formData.senha)
-      );
+      // Chamar endpoint de login do backend
+      const response = await fetch('http://localhost:3333/usuarios/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          login: formData.login,
+          senha: formData.senha
+        })
+      });
 
-      if (usuario) {
-        // Salvar o usuário logado no localStorage
-        localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
-        // Redirecionar para o dashboard
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Login ou senha incorretos');
         try {
-          toaster.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
+          toaster.create({ title: 'Erro de login', description: errorData.error || 'Login ou senha incorretos', status: 'error' })
         } catch (e) {
           if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
-            window.__TOASTER.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
+            window.__TOASTER.create({ title: 'Erro de login', description: errorData.error || 'Login ou senha incorretos', status: 'error' })
           }
         }
-        router.push('/projetos');
-      } else {
-        setError('Login ou senha incorretos');
-        try {
-          toaster.create({ title: 'Erro de login', description: 'Login ou senha incorretos', status: 'error' })
-        } catch (e) {
-          if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
-            window.__TOASTER.create({ title: 'Erro de login', description: 'Login ou senha incorretos', status: 'error' })
-          }
+        return;
+      }
+
+      const data = await response.json();
+      const usuario = data.usuario;
+      const token = data.token;
+
+      // Salvar o usuário logado E o token no localStorage
+      localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
+      localStorage.setItem('token', token);
+      
+      // Exibir mensagem de sucesso
+      try {
+        toaster.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
+      } catch (e) {
+        if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+          window.__TOASTER.create({ title: 'Login bem-sucedido', description: `Olá ${usuario.nome || usuario.login}`, status: 'success' })
         }
       }
+      
+      // Redirecionar para o dashboard
+      router.push('/projetos');
     } catch (err) {
       setError('Erro ao fazer login. Verifique se o servidor está rodando.');
       try {

@@ -15,7 +15,7 @@ export default function ChatBot() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [tarefa_id, setTarefa_id] = useState(null);
+  const [projeto_id, setProjeto_id] = useState(null);
   const messagesEndRef = useRef(null);
 
   // Auto-scroll para a última mensagem
@@ -27,16 +27,16 @@ export default function ChatBot() {
     scrollToBottom();
   }, [messages]);
 
-  // Recuperar tarefa_id da URL ou localStorage se estiver em página de detalhes
+  // Recuperar projeto_id da URL ou localStorage se estiver em página de projeto
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('tarefa_id');
+    const id = urlParams.get('projeto_id');
     if (id) {
-      setTarefa_id(parseInt(id));
+      setProjeto_id(parseInt(id));
     } else if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('tarefa_id');
+      const stored = localStorage.getItem('projeto_id');
       if (stored) {
-        setTarefa_id(parseInt(stored));
+        setProjeto_id(parseInt(stored));
       }
     }
   }, []);
@@ -57,8 +57,8 @@ export default function ChatBot() {
     setIsLoading(true);
 
     try {
-      // Se não tiver tarefa_id, usar um padrão ou avisar
-      const id = tarefa_id || 1; // Valor padrão para testes
+      // Se não tiver projeto_id, usar um padrão ou avisar
+      const id = projeto_id || 1; // Valor padrão para testes
 
       const response = await fetch('http://localhost:3333/gemini/generate', {
         method: 'POST',
@@ -67,7 +67,7 @@ export default function ChatBot() {
         },
         body: JSON.stringify({
           prompt: trimmedInput,
-          tarefa_id: id
+          projeto_id: id
         })
       });
 

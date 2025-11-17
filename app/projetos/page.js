@@ -6,11 +6,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Box, Heading, SimpleGrid, Text, Button, Center } from '@chakra-ui/react'
 import { toaster } from '../../components/ui/toaster'
+import { useAuth } from '../../lib/hooks/useAuth'
 import '../../app/globals.css'
 import ConfirmModal from '../../components/ui/confirm-modal'
 import CreateProjectModal from '../../components/ui/create-project-modal'
 
 export default function ProjetosPage() {
+  useAuth() // Verifica autenticação
   const router = useRouter()
   const [projetos, setProjetos] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -19,6 +21,7 @@ export default function ProjetosPage() {
   const [confirmingProject, setConfirmingProject] = useState(null)
   const [confirmLoading, setConfirmLoading] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [usuarioLogado, setUsuarioLogado] = useState(null)
 
   useEffect(() => {
     (async () => {
@@ -26,13 +29,12 @@ export default function ProjetosPage() {
         // require login
         const stored = localStorage.getItem('usuarioLogado')
         if (!stored) return router.push('/')
+        
+        const usuario = JSON.parse(stored)
+        setUsuarioLogado(usuario)
+        
         const res = await fetch('http://localhost:3333/projetos')
         const data = await res.json()
-        // try to filter by logged user if present
-        let usuario = null
-        try {
-          usuario = JSON.parse(localStorage.getItem('usuarioLogado'))
-        } catch (e) { usuario = null }
 
         if (usuario && Array.isArray(data)) {
           const filtered = data.filter(p => {
@@ -62,9 +64,35 @@ export default function ProjetosPage() {
   return (
     <div className="dashboard-container">
       <main className="main-content">
-        <header className="top-bar" style={{ display: 'flex', alignItems: 'center' }}>
-          {/* left side empty so content below can align buttons as needed */}
+        <header className="top-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div />
+          {usuarioLogado && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ textAlign: 'right', fontSize: '14px' }}>
+                <div style={{ fontWeight: '600' }}>{usuarioLogado.nome || usuarioLogado.login}</div>
+                <div style={{ fontSize: '12px', opacity: '0.7' }}>{usuarioLogado.email}</div>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('usuarioLogado')
+                  localStorage.removeItem('token')
+                  router.push('/')
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: '#ff4d4d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                <i className="fas fa-sign-out-alt" style={{ marginRight: '8px' }} />
+                Sair
+              </button>
+            </div>
+          )}
         </header>
 
         <section className="projects-section">

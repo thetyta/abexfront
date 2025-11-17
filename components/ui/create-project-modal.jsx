@@ -9,17 +9,16 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate, defaultV
     descricao: defaultValues.descricao || '',
     // backend expects enum values: 'PESSOAL' or 'TRABALHO'
     tipo: defaultValues.tipo || 'PESSOAL',
-    responsavel_id: defaultValues.responsavel_id || null,
-    responsavel_nome: ''
+    responsavel_id: null
   })
 
   useEffect(() => {
-    // try to autofill responsavel_id and name from localStorage.usuarioLogado
+    // Pega automaticamente o ID do usuário logado
     try {
       const stored = localStorage.getItem('usuarioLogado')
       if (stored) {
         const user = JSON.parse(stored)
-        if (user && user.id) setForm(prev => ({ ...prev, responsavel_id: Number(user.id), responsavel_nome: user.nome || '' }))
+        if (user && user.id) setForm(prev => ({ ...prev, responsavel_id: Number(user.id) }))
       }
     } catch (e) {
       // ignore
@@ -40,12 +39,25 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate, defaultV
       try { toaster.create({ title: 'Erro', description: 'Nome do projeto é obrigatório', status: 'error' }) } catch (e) { alert('Nome do projeto é obrigatório') }
       return
     }
+    
+    // Garante que responsavel_id está definido
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado') || '{}')
+    const responsavel_id = form.responsavel_id || (usuarioLogado.id ? Number(usuarioLogado.id) : null)
+    
+    if (!responsavel_id) {
+      try { toaster.create({ title: 'Erro', description: 'Usuário não identificado', status: 'error' }) } catch (e) { alert('Usuário não identificado') }
+      return
+    }
+    
     try {
       setLoading(true)
       const res = await fetch('http://localhost:3333/projetos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          responsavel_id
+        })
       })
       if (!res.ok) throw new Error('Erro ao criar projeto')
       const created = await res.json()
@@ -82,12 +94,6 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate, defaultV
               <option value="PESSOAL">Pessoal</option>
               <option value="TRABALHO">Trabalho</option>
             </select>
-          </div>
-          <div className="form-group">
-            <label>Responsável</label>
-            <input value={form.responsavel_nome || ''} readOnly className="form-input" />
-            <input type="hidden" name="responsavel_id" value={form.responsavel_id || ''} />
-            <small style={{ color: '#64748b' }}>Responsável será o usuário logado por padrão</small>
           </div>
           <div className="modal-actions">
             <button type="button" className="btn-cancel" onClick={() => !loading && onClose()} disabled={loading}>Cancelar</button>
