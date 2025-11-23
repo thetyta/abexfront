@@ -49,7 +49,6 @@ export default function Sidebar() {
           <div style={{ color: 'var(--color-muted)', marginBottom: 8 }}>Não logado</div>
         )}
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <button className="new-project-btn" onClick={() => router.push('/projetos/novo')}>Novo</button>
           <button className="delete-task-btn" onClick={handleLogout}>Sair</button>
         </div>
       </div>
