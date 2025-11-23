@@ -112,7 +112,6 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
               <i className="fas fa-trash"></i>
               Excluir
             </button>
-            <Chatbot />
           </div>
         </div>
       </div>

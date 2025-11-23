@@ -5,23 +5,54 @@ import { toaster } from './toaster'
 
 export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaId = null }) {
   const [saving, setSaving] = useState(false)
+  const [colaboradores, setColaboradores] = useState([])
   const [formData, setFormData] = useState(() => ({
     nome: '',
     descricao: '',
     coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
     prioridade: 'MEDIA',
-    data_vencimento: ''
+    data_vencimento: '',
+    responsavel_id: ''
   }))
+
+  // Fetch collaborators when modal opens
+  useEffect(() => {
+    if (isOpen && projetoId) {
+      fetch(`http://localhost:3333/projetos/${projetoId}`)
+        .then(res => res.json())
+        .then(data => {
+          const lista = []
+          if (data.responsavel) lista.push(data.responsavel)
+          if (data.colaboradores) {
+            data.colaboradores.forEach(c => {
+              if (!lista.find(l => l.id === c.id)) {
+                lista.push(c)
+              }
+            })
+          }
+          setColaboradores(lista)
+          
+          // Set default responsible to current user if they are in the list, otherwise the project responsible
+          const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'))
+          if (usuarioLogado && !formData.responsavel_id) {
+             setFormData(prev => ({ ...prev, responsavel_id: usuarioLogado.id }))
+          }
+        })
+        .catch(err => console.error('Erro ao buscar colaboradores:', err))
+    }
+  }, [isOpen, projetoId])
 
   // Reset form when modal opens or when colunaId/colunas change so the header button opens a fresh form
   useEffect(() => {
     if (!isOpen) return
+    const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'))
     setFormData({
       nome: '',
       descricao: '',
       coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
       prioridade: 'MEDIA',
-      data_vencimento: ''
+      data_vencimento: '',
+      responsavel_id: usuarioLogado ? usuarioLogado.id : ''
     })
   }, [isOpen, colunaId, colunas])
 
@@ -50,7 +81,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
           coluna_id: formData.coluna_id,
           prioridade: formData.prioridade,
           data_vencimento: formData.data_vencimento || null,
-          responsavel_id: usuario.id,
+          responsavel_id: formData.responsavel_id,
           posicao: 0,
           projeto_id: parseInt(projetoId)
         })
@@ -70,7 +101,8 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
         descricao: '',
         coluna_id: colunaId || (colunas.length > 0 ? colunas[0].id : ''),
         prioridade: 'MEDIA',
-        data_vencimento: ''
+        data_vencimento: '',
+        responsavel_id: ''
       })
       onClose()
       
@@ -165,15 +197,34 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
             </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="data_vencimento">Data de Vencimento</label>
-            <input
-              id="data_vencimento"
-              type="date"
-              value={formData.data_vencimento}
-              onChange={(e) => handleChange('data_vencimento', e.target.value)}
-              className="form-input"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="responsavel">Responsável</label>
+              <select
+                id="responsavel"
+                value={formData.responsavel_id}
+                onChange={(e) => handleChange('responsavel_id', e.target.value)}
+                className="form-select"
+              >
+                <option value="">Selecione um responsável</option>
+                {colaboradores.map(colab => (
+                  <option key={colab.id} value={colab.id}>
+                    {colab.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="data_vencimento">Data de Vencimento</label>
+              <input
+                id="data_vencimento"
+                type="date"
+                value={formData.data_vencimento}
+                onChange={(e) => handleChange('data_vencimento', e.target.value)}
+                className="form-input"
+              />
+            </div>
           </div>
 
           <div className="modal-actions">

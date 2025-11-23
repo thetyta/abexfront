@@ -20,6 +20,7 @@ import EditTaskModal from '../../../../components/ui/edit-task-modal';
 import DeleteColumnModal from '../../../../components/ui/delete-column-modal';
 import DeleteTaskModal from '../../../../components/ui/delete-task-modal';
 import NewColumnModal from '../../../../components/ui/new-column-modal';
+import Chatbot from '../../../../components/ui/chat-bot';
 
 
 // COMPONENTE PRINCIPAL DA PÁGINA
@@ -461,7 +462,7 @@ export default function KanbanPage({ params }) {
             setShowColaboradoresModal(false);
           }}
         />
-
+        <Chatbot projetoId={id} tarefaId={showTaskDetail ? selectedTask?.id : null} />
       </main>
     </div>
   );
