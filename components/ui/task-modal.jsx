@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { toaster } from './toaster'
 
-export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaId = null }) {
+export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaId = null, onTaskCreated }) {
   const [saving, setSaving] = useState(false)
   const [colaboradores, setColaboradores] = useState([])
   const [formData, setFormData] = useState(() => ({
@@ -11,7 +11,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
     descricao: '',
     coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
     prioridade: 'MEDIA',
-    data_vencimento: '',
+    data_prazo: '',
     responsavel_id: ''
   }))
 
@@ -51,7 +51,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
       descricao: '',
       coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
       prioridade: 'MEDIA',
-      data_vencimento: '',
+      data_prazo: '',
       responsavel_id: usuarioLogado ? usuarioLogado.id : ''
     })
   }, [isOpen, colunaId, colunas])
@@ -80,7 +80,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
           descricao: formData.descricao,
           coluna_id: formData.coluna_id,
           prioridade: formData.prioridade,
-          data_vencimento: formData.data_vencimento || null,
+          data_prazo: formData.data_prazo || null,
           responsavel_id: formData.responsavel_id,
           posicao: 0,
           projeto_id: parseInt(projetoId)
@@ -99,15 +99,20 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
       setFormData({
         nome: '',
         descricao: '',
-        coluna_id: colunaId || (colunas.length > 0 ? colunas[0].id : ''),
+        coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
         prioridade: 'MEDIA',
-        data_vencimento: '',
+        data_prazo: '',
         responsavel_id: ''
       })
-      onClose()
       
-      // Reload the page to show new task
-      window.location.reload()
+      if (onTaskCreated) {
+        onTaskCreated()
+      } else {
+        // Fallback if no callback provided
+        window.location.reload()
+      }
+      
+      onClose()
     } catch (err) {
       console.error(err)
       toaster.create({ 
@@ -216,12 +221,12 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
             </div>
 
             <div className="form-group">
-              <label htmlFor="data_vencimento">Data de Vencimento</label>
+              <label htmlFor="data_prazo">Data de Vencimento</label>
               <input
-                id="data_vencimento"
+                id="data_prazo"
                 type="date"
-                value={formData.data_vencimento}
-                onChange={(e) => handleChange('data_vencimento', e.target.value)}
+                value={formData.data_prazo}
+                onChange={(e) => handleChange('data_prazo', e.target.value)}
                 className="form-input"
               />
             </div>

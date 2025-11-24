@@ -62,6 +62,15 @@ export default function CreateProjectModal({ isOpen, onClose, onCreate, defaultV
       if (!res.ok) throw new Error('Erro ao criar projeto')
       const created = await res.json()
       try { toaster.create({ title: 'Projeto criado', description: `Projeto "${created.nome}" criado com sucesso.`, status: 'success' }) } catch (e) { if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) { window.__TOASTER.create({ title: 'Projeto criado', description: `Projeto "${created.nome}" criado com sucesso.`, status: 'success' }) } }
+      
+      // Reset form
+      setForm({
+        nome: '',
+        descricao: '',
+        tipo: 'PESSOAL',
+        responsavel_id: responsavel_id
+      })
+      
       if (onCreate) onCreate(created)
       onClose()
     } catch (err) {

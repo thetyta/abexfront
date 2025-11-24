@@ -20,6 +20,7 @@ import EditTaskModal from '../../../../components/ui/edit-task-modal';
 import DeleteColumnModal from '../../../../components/ui/delete-column-modal';
 import DeleteTaskModal from '../../../../components/ui/delete-task-modal';
 import NewColumnModal from '../../../../components/ui/new-column-modal';
+import EditColumnModal from '../../../../components/ui/edit-column-modal';
 import Chatbot from '../../../../components/ui/chat-bot';
 
 
@@ -45,6 +46,8 @@ export default function KanbanPage({ params }) {
   const [showDeleteTask, setShowDeleteTask] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [showNewColumnModal, setShowNewColumnModal] = useState(false);
+  const [showEditColumnModal, setShowEditColumnModal] = useState(false);
+  const [columnToEdit, setColumnToEdit] = useState(null);
   const router = useRouter();
 
   // Salva projeto_id no localStorage para o chatbot usar
@@ -198,6 +201,44 @@ export default function KanbanPage({ params }) {
     }
   };
 
+  const handleEditColumnClick = (column) => {
+    setColumnToEdit(column);
+    setShowEditColumnModal(true);
+  };
+
+  const handleUpdateColumn = async (columnId, data) => {
+    try {
+      const res = await fetch(`http://localhost:3333/colunas/${columnId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!res.ok) throw new Error('Erro ao atualizar coluna');
+      
+      const updatedCol = await res.json();
+      
+      setColunas(prev => prev.map(c => c.id === columnId ? { ...c, ...updatedCol } : c));
+      
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Coluna atualizada', 
+          description: `Coluna "${updatedCol.nome}" foi atualizada.`, 
+          status: 'success' 
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      if (typeof window !== 'undefined' && window.__TOASTER && window.__TOASTER.create) {
+        window.__TOASTER.create({ 
+          title: 'Erro', 
+          description: 'Não foi possível atualizar a coluna', 
+          status: 'error' 
+        });
+      }
+    }
+  };
+
   const handleDeleteColumn = (column) => {
     setColumnToDelete(column);
     setShowDeleteColumn(true);
@@ -320,13 +361,22 @@ export default function KanbanPage({ params }) {
       destTaskIndex -= 1;
     }
 
+    // Verificar auto-conclusão ou mudança de status baseada na coluna
+    const destColumn = newColunas[destColIndex];
+    if (destColumn.tipo && destColumn.tipo !== 'PADRAO') {
+      if (destColumn.tipo === 'CONCLUSAO') {
+        draggedTask.status = 'CONCLUIDA';
+      } else {
+        draggedTask.status = destColumn.tipo;
+      }
+    }
+
     // Agora sim, remover da origem e inserir no destino
     newColunas[sourceColIndex].tarefas.splice(taskIndex, 1);
     newColunas[destColIndex].tarefas.splice(destTaskIndex, 0, draggedTask);
     setColunas(newColunas);
     
     try {
-      const destColumn = newColunas[destColIndex];
       const reorderedTasks = destColumn.tarefas.map((task, index) => ({ ...task, coluna_id: destColumn.id, posicao: index }));
       
       await Promise.all(reorderedTasks.map(task => 
@@ -396,7 +446,14 @@ export default function KanbanPage({ params }) {
           >
             <div className="kanban-board">
               {colunas.map((col) => (
-                <Column key={col.id} col={col} onAddCard={() => handleAddCard(col.id)} onTaskClick={handleTaskClick} onDeleteColumn={() => handleDeleteColumn(col)} />
+                <Column 
+                  key={col.id} 
+                  col={col} 
+                  onAddCard={() => handleAddCard(col.id)} 
+                  onTaskClick={handleTaskClick} 
+                  onDeleteColumn={() => handleDeleteColumn(col)} 
+                  onEditColumn={() => handleEditColumnClick(col)}
+                />
               ))}
             </div>
 
@@ -452,6 +509,15 @@ export default function KanbanPage({ params }) {
           onCreate={handleAddColumn}
           initialValue={newColName}
         />
+        <EditColumnModal
+          isOpen={showEditColumnModal}
+          onClose={() => {
+            setShowEditColumnModal(false);
+            setColumnToEdit(null);
+          }}
+          onUpdate={handleUpdateColumn}
+          column={columnToEdit}
+        />
         <ColaboradoresModal 
           isOpen={showColaboradoresModal} 
           onClose={() => setShowColaboradoresModal(false)} 
@@ -462,22 +528,58 @@ export default function KanbanPage({ params }) {
             setShowColaboradoresModal(false);
           }}
         />
-        <Chatbot projetoId={id} tarefaId={showTaskDetail ? selectedTask?.id : null} />
+        <Chatbot 
+          projetoId={id} 
+          tarefaId={showTaskDetail ? selectedTask?.id : null} 
+          onUpdate={fetchQuadro}
+        />
       </main>
     </div>
   );
 }
 
 // COMPONENTES AUXILIARES
-function Column({ col, onAddCard, onTaskClick, onDeleteColumn }) {
+function Column({ col, onAddCard, onTaskClick, onDeleteColumn, onEditColumn }) {
   const { setNodeRef } = useDroppable({ id: `col-${col.id}` });
+  
+  const getStatusIcon = (tipo) => {
+    switch(tipo) {
+      case 'CONCLUSAO': return <i className="fas fa-check-circle" style={{ color: '#10b981', fontSize: '14px' }} title="Concluída"></i>;
+      case 'PENDENTE': return <i className="fas fa-clock" style={{ color: '#f59e0b', fontSize: '14px' }} title="Pendente"></i>;
+      case 'EM_ANDAMENTO': return <i className="fas fa-spinner" style={{ color: '#3b82f6', fontSize: '14px' }} title="Em Andamento"></i>;
+      case 'CANCELADA': return <i className="fas fa-ban" style={{ color: '#ef4444', fontSize: '14px' }} title="Cancelada"></i>;
+      default: return null;
+    }
+  };
+
   return (
     <div ref={setNodeRef} className="kanban-column">
       <div className="kanban-column-header">
         <h3 className="kanban-column-title">
-          {col.nome}
           <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {col.nome}
+            {getStatusIcon(col.tipo)}
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span className="kanban-column-count">{col.tarefas.length}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEditColumn(); }} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: '#64748b', 
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#f1f5f9'}
+              onMouseLeave={(e) => e.target.style.background = 'transparent'}
+              title="Editar coluna"
+            >
+              <i className="fas fa-pen"></i>
+            </button>
             <button 
               onClick={(e) => { e.stopPropagation(); onDeleteColumn(); }} 
               style={{ 
@@ -485,7 +587,7 @@ function Column({ col, onAddCard, onTaskClick, onDeleteColumn }) {
                 border: 'none', 
                 color: '#dc2626', 
                 cursor: 'pointer',
-                padding: '4px 8px',
+                padding: '4px',
                 borderRadius: '4px',
                 fontSize: '14px',
                 transition: 'all 0.15s ease'
@@ -533,12 +635,29 @@ function GapDrop({ id }) {
 function Task({ tarefa, onClick }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `task-${tarefa.id}` });
   
+  const isExpired = () => {
+    const deadline = tarefa.data_prazo || tarefa.data_vencimento;
+    if (!deadline) return false;
+    if (tarefa.status === 'CONCLUIDA' || tarefa.status === 'CANCELADA') return false;
+    
+    const todayStr = new Date().toISOString().split('T')[0];
+    // Assuming deadline is YYYY-MM-DD or ISO string
+    if (typeof deadline === 'string' && deadline.length >= 10) {
+        return deadline.substring(0, 10) < todayStr;
+    }
+    return new Date(deadline) < new Date();
+  };
+
+  const expired = isExpired();
+
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     opacity: isDragging ? 0 : 1,
     visibility: isDragging ? 'hidden' : 'visible',
     position: 'relative',
-    zIndex: 10
+    zIndex: 10,
+    border: expired ? '1px solid #ef4444' : '1px solid transparent',
+    background: expired ? '#fff5f5' : '#fff'
   };
 
   const getPriorityClass = (prioridade) => {
@@ -549,6 +668,11 @@ function Task({ tarefa, onClick }) {
       case 'critica': return 'priority-critica';
       default: return 'priority-media';
     }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -564,12 +688,35 @@ function Task({ tarefa, onClick }) {
       {tarefa.descricao && <p className="kanban-card-description">{tarefa.descricao}</p>}
       <div className="kanban-card-meta">
         <span className={`kanban-card-priority ${getPriorityClass(tarefa.prioridade)}`}>{tarefa.prioridade || 'MÉDIA'}</span>
-        {tarefa.data_vencimento && (
-          <span className="kanban-card-due">
-            <i className="fas fa-calendar"></i>
-            {new Date(tarefa.data_vencimento).toLocaleDateString('pt-BR')}
-          </span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {(tarefa.data_prazo || tarefa.data_vencimento) && (
+            <span className="kanban-card-due" style={{ color: expired ? '#ef4444' : 'inherit', fontWeight: expired ? '600' : 'normal' }}>
+              <i className="fas fa-calendar"></i>
+              {expired && <span style={{ marginRight: '4px', marginLeft: '4px', fontSize: '10px', textTransform: 'uppercase' }}>Expirado</span>}
+              {new Date(tarefa.data_prazo || tarefa.data_vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+            </span>
+          )}
+          {tarefa.responsavel && (
+            <div 
+              title={tarefa.responsavel.nome}
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: '#e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: '600',
+                color: '#475569',
+                border: '1px solid #cbd5e1'
+              }}
+            >
+              {getInitials(tarefa.responsavel.nome)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

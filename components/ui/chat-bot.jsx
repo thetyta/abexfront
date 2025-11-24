@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import styles from './chat-bot.module.css';
 
 export default function ChatBot(props) {
@@ -96,7 +98,7 @@ export default function ChatBot(props) {
 
     // Adicionar mensagem do usuário
     const userMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: trimmedInput,
       sender: 'user',
       timestamp: new Date(),
@@ -130,7 +132,7 @@ export default function ChatBot(props) {
 
       const data = await response.json();
       const botMessage = {
-        id: messages.length + 2,
+        id: Date.now() + 1,
         text: data.text || 'Desculpe, não consegui processar sua mensagem.',
         sender: 'bot',
         timestamp: new Date(),
@@ -138,13 +140,17 @@ export default function ChatBot(props) {
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      if (data.action === 'UPDATE_KANBAN' && props.onUpdate) {
+        props.onUpdate();
+      }
     } catch (error) {
       if (error.name === 'AbortError') {
         console.log('Requisição cancelada');
       } else {
         console.error('Erro:', error);
         const errorMessage = {
-          id: messages.length + 2,
+          id: Date.now() + 2,
           text: 'Desculpe, ocorreu um erro ao conectar com o assistente. Tente novamente.',
           sender: 'bot',
           timestamp: new Date(),
@@ -232,7 +238,9 @@ export default function ChatBot(props) {
                   msg.sender === 'user' ? styles.userMessage : styles.botMessage
                 }`}
               >
-                <p>{msg.text}</p>
+                <div className={styles.markdownBody}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                </div>
                 <small className={styles.timestamp}>
                   {msg.timestamp.toLocaleTimeString('pt-BR', {
                     hour: '2-digit',

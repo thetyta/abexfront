@@ -10,7 +10,7 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
     descricao: '',
     coluna_id: '',
     prioridade: 'MEDIA',
-    data_vencimento: ''
+    data_prazo: ''
   })
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
         descricao: tarefa.descricao || '',
         coluna_id: tarefa.coluna_id || (colunas && colunas.length > 0 ? colunas[0].id : ''),
         prioridade: tarefa.prioridade || 'MEDIA',
-        data_vencimento: tarefa.data_vencimento || ''
+        data_prazo: tarefa.data_prazo || ''
       })
     }
   }, [isOpen, tarefa, colunas])
@@ -48,7 +48,7 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
           descricao: formData.descricao,
           coluna_id: formData.coluna_id,
           prioridade: formData.prioridade,
-          data_vencimento: formData.data_vencimento || null
+          data_prazo: formData.data_prazo || null
         })
       })
 
@@ -152,12 +152,12 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
           </div>
 
           <div className="form-group">
-            <label htmlFor="data_vencimento">Data de Vencimento</label>
+            <label htmlFor="data_prazo">Data de Vencimento</label>
             <input
-              id="data_vencimento"
+              id="data_prazo"
               type="date"
-              value={formData.data_vencimento}
-              onChange={(e) => handleChange('data_vencimento', e.target.value)}
+              value={formData.data_prazo}
+              onChange={(e) => handleChange('data_prazo', e.target.value)}
               className="form-input"
             />
           </div>

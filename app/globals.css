@@ -1,17 +1,29 @@
 :root {
-  /* Rafa style tokens (colors, spacing) */
-  --color-primary: #007bff;
-  --color-primary-hover: #0056b3;
+  /* Palette */
+  --color-1: #0654e9;
+  --color-2: #2d6bef;
+  --color-3: #5582f4;
+  --color-4: #7c98fa;
+  --color-5: #a3afff;
+  --color-6: #8298f0;
+  --color-7: #a1b2f4;
+  --color-8: #c1ccf8;
+  --color-9: #e0e5fb;
+  --color-10: #ffffff;
+
+  /* Semantic tokens */
+  --color-primary: var(--color-1);
+  --color-primary-hover: var(--color-2);
   --color-danger: #dc3545;
   --color-success: #28a745;
   --color-text: #212529;
   --color-muted: #6c757d;
-  --color-bg: #f4f7f6;
-  --card-bg: #ffffff;
-  --border-color: #ced4da;
-  --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  --color-bg: var(--color-9);
+  --card-bg: var(--color-10);
+  --border-color: var(--color-8);
+  --shadow: 0 4px 12px rgba(6, 84, 233, 0.08);
   --radius: 8px;
-  --background: #ffffff;
+  --background: var(--color-10);
   --foreground: #171717;
 }
 
@@ -111,7 +123,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .app-logo { font-weight:700; color: var(--color-primary); text-decoration:none }
 .app-nav a { color: var(--color-muted); margin-left: 16px; text-decoration:none }
 
-.app-main { flex: 1; max-width: 1200px; margin: 20px auto; padding: 0 20px 80px }
+.app-main { flex: 1; width: 100%; margin: 0; padding: 20px 40px 80px }
 
 /* --- Sidebar (Rafa) --- */
 .sidebar {
@@ -155,7 +167,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .new-project-btn-large {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, var(--color-1) 0%, var(--color-3) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -167,13 +179,13 @@ html, body { background: #ffffff !important; color-scheme: light; }
   gap: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 4px 12px rgba(6, 84, 233, 0.25);
 }
 
 .new-project-btn-large:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
-  background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+  box-shadow: 0 8px 24px rgba(6, 84, 233, 0.35);
+  background: linear-gradient(135deg, var(--color-2) 0%, var(--color-4) 100%);
 }
 
 .new-project-btn-large i {
@@ -207,8 +219,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .projects-count {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--color-9);
+  color: var(--color-muted);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 14px;
@@ -224,8 +236,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .project-card-taiga {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border: 1px solid var(--color-8);
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
@@ -237,12 +249,12 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .project-card-taiga:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  border-color: #cbd5e1;
+  border-color: var(--color-4);
 }
 
 .project-card-taiga.selected {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1), 0 12px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 2px rgba(6, 84, 233, 0.1), 0 12px 32px rgba(0, 0, 0, 0.15);
   transform: translateY(-4px);
 }
 
@@ -266,7 +278,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .project-avatar {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, var(--color-1), var(--color-3));
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -292,7 +304,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 
 .project-description {
   margin: 0;
-  color: #64748b;
+  color: var(--color-muted);
   font-size: 14px;
   line-height: 1.5;
   display: -webkit-box;
@@ -307,8 +319,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .project-type {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--color-9);
+  color: var(--color-muted);
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
@@ -350,14 +362,14 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .btn-action.secondary {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--color-10);
+  color: var(--color-muted);
+  border: 1px solid var(--color-8);
 }
 
 .btn-action.secondary:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--color-9);
+  border-color: var(--color-4);
   transform: translateY(-1px);
 }
 
@@ -382,14 +394,14 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .empty-state {
   text-align: center;
   padding: 64px 32px;
-  color: #64748b;
+  color: var(--color-muted);
   grid-column: 1 / -1;
 }
 
 .empty-icon {
   width: 80px;
   height: 80px;
-  background: #f1f5f9;
+  background: var(--color-9);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -399,7 +411,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 
 .empty-icon i {
   font-size: 32px;
-  color: #94a3b8;
+  color: var(--color-4);
 }
 
 .empty-state h3 {
@@ -421,11 +433,11 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .btn-back {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--color-10);
+  border: 1px solid var(--color-8);
   border-radius: 8px;
   padding: 8px 16px;
-  color: #475569;
+  color: var(--color-muted);
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -436,8 +448,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .btn-back:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--color-9);
+  border-color: var(--color-4);
   transform: translateY(-1px);
 }
 
@@ -450,7 +462,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 
 .project-name {
   margin: 0;
-  color: #64748b;
+  color: var(--color-muted);
   font-size: 16px;
   display: flex;
   align-items: center;
@@ -458,8 +470,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .task-form {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--card-bg);
+  border: 1px solid var(--color-8);
   border-radius: 12px;
   padding: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -484,7 +496,7 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .form-input, .form-textarea, .form-select {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-8);
   border-radius: 8px;
   font-size: 16px;
   transition: all 0.15s ease;
@@ -911,8 +923,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 }
 
 .priority-baixa {
-  background: #f0f9ff;
-  color: #0369a1;
+  background: var(--color-9);
+  color: var(--color-1);
 }
 
 .priority-media {
@@ -933,8 +945,8 @@ html, body { background: #ffffff !important; color-scheme: light; }
 .kanban-add-card {
   width: 100%;
   padding: 12px;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
+  background: var(--color-9);
+  border: 2px dashed var(--color-4);
   border-radius: 8px;
   color: #64748b;
   font-size: 14px;

@@ -10,7 +10,7 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
 
   const getPriorityColor = (prioridade) => {
     switch(prioridade?.toLowerCase()) {
-      case 'baixa': return '#0369a1'
+      case 'baixa': return 'var(--color-1)'
       case 'media': return '#a16207'
       case 'alta': return '#dc2626'
       case 'critica': return '#7c2d12'
@@ -44,6 +44,32 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
           </div>
 
           <div className="task-detail-meta">
+            <div className="task-meta-item">
+              <span className="meta-label">Responsável:</span>
+              {tarefa.responsavel ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1'
+                  }}>
+                    {tarefa.responsavel.nome ? tarefa.responsavel.nome.substring(0, 2).toUpperCase() : 'U'}
+                  </div>
+                  <span style={{ fontSize: '14px', color: '#334155' }}>{tarefa.responsavel.nome}</span>
+                </div>
+              ) : (
+                <span className="status-badge" style={{ background: '#f1f5f9', color: '#64748b' }}>Sem responsável</span>
+              )}
+            </div>
+
             <div className="task-meta-item">
               <span className="meta-label">Prioridade:</span>
               <span 

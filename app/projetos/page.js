@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Box, Heading, SimpleGrid, Text, Button, Center } from '@chakra-ui/react'
 import { toaster } from '../../components/ui/toaster'
 import { useAuth } from '../../lib/hooks/useAuth'
 import '../../app/globals.css'
@@ -64,37 +63,6 @@ export default function ProjetosPage() {
   return (
     <div className="dashboard-container">
       <main className="main-content">
-        <header className="top-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div />
-          {usuarioLogado && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <div style={{ textAlign: 'right', fontSize: '14px' }}>
-                <div style={{ fontWeight: '600' }}>{usuarioLogado.nome || usuarioLogado.login}</div>
-                <div style={{ fontSize: '12px', opacity: '0.7' }}>{usuarioLogado.email}</div>
-              </div>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('usuarioLogado')
-                  localStorage.removeItem('token')
-                  router.push('/')
-                }}
-                style={{
-                  padding: '8px 16px',
-                  background: '#ff4d4d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                <i className="fas fa-sign-out-alt" style={{ marginRight: '8px' }} />
-                Sair
-              </button>
-            </div>
-          )}
-        </header>
-
         <section className="projects-section">
           <div className="projects-header-container">
             <div className="new-project-section">

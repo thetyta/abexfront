@@ -2,7 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Provider } from "../components/ui/provider";
 import Toaster from "../components/ui/toaster";
-import Sidebar from "../components/ui/sidebar";
+import Header from "../components/ui/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +29,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <Provider>
-          <div style={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar />
-            <main className="app-main">
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <Header />
+            <main className="app-main" style={{ flex: 1 }}>
               <Toaster />
               {children}
             </main>
