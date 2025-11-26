@@ -48,6 +48,7 @@ export default function KanbanPage({ params }) {
   const [showNewColumnModal, setShowNewColumnModal] = useState(false);
   const [showEditColumnModal, setShowEditColumnModal] = useState(false);
   const [columnToEdit, setColumnToEdit] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
   const router = useRouter();
 
   // Salva projeto_id no localStorage para o chatbot usar
@@ -64,6 +65,13 @@ export default function KanbanPage({ params }) {
       const pRes = await fetch(`http://localhost:3333/projetos/${id}`);
       const pData = await pRes.json();
       setProjeto(pData);
+
+      // Verificar se o usuário logado é o responsável (owner)
+      const usuarioLogadoStr = localStorage.getItem('usuarioLogado');
+      if (usuarioLogadoStr) {
+        const usuarioLogado = JSON.parse(usuarioLogadoStr);
+        setIsOwner(pData.responsavel_id === usuarioLogado.id);
+      }
 
       const qRes = await fetch(`http://localhost:3333/quadros?projeto_id=${id}`);
       let qData = await qRes.json();
@@ -364,11 +372,7 @@ export default function KanbanPage({ params }) {
     // Verificar auto-conclusão ou mudança de status baseada na coluna
     const destColumn = newColunas[destColIndex];
     if (destColumn.tipo && destColumn.tipo !== 'PADRAO') {
-      if (destColumn.tipo === 'CONCLUSAO') {
-        draggedTask.status = 'CONCLUIDA';
-      } else {
-        draggedTask.status = destColumn.tipo;
-      }
+      draggedTask.status = destColumn.tipo;
     }
 
     // Agora sim, remover da origem e inserir no destino
@@ -425,9 +429,11 @@ export default function KanbanPage({ params }) {
               )}
             </div>
             <div className="kanban-actions">
-              <button className="btn-action secondary" onClick={() => setShowColaboradoresModal(true)}>
-                <i className="fas fa-users"></i> Colaboradores
-              </button>
+              {isOwner && (
+                <button className="btn-action secondary" onClick={() => setShowColaboradoresModal(true)}>
+                  <i className="fas fa-users"></i> Colaboradores
+                </button>
+              )}
               <button className="btn-action secondary" onClick={() => { setSelectedColumnId(null); setShowTaskModal(true) }}>
                 <i className="fas fa-plus"></i> Nova Tarefa
               </button>
@@ -463,7 +469,7 @@ export default function KanbanPage({ params }) {
           </DndContext>
         </div>
         
-        <TaskModal isOpen={showTaskModal} onClose={() => setShowTaskModal(false)} colunas={colunas} projetoId={id} onTaskCreated={fetchQuadro} />
+        <TaskModal isOpen={showTaskModal} onClose={() => setShowTaskModal(false)} colunas={colunas} projetoId={id} colunaId={selectedColumnId} onTaskCreated={fetchQuadro} />
         <TaskDetailModal 
           isOpen={showTaskDetail} 
           onClose={() => setShowTaskDetail(false)} 
@@ -544,7 +550,7 @@ function Column({ col, onAddCard, onTaskClick, onDeleteColumn, onEditColumn }) {
   
   const getStatusIcon = (tipo) => {
     switch(tipo) {
-      case 'CONCLUSAO': return <i className="fas fa-check-circle" style={{ color: '#10b981', fontSize: '14px' }} title="Concluída"></i>;
+      case 'CONCLUIDA': return <i className="fas fa-check-circle" style={{ color: '#10b981', fontSize: '14px' }} title="Concluída"></i>;
       case 'PENDENTE': return <i className="fas fa-clock" style={{ color: '#f59e0b', fontSize: '14px' }} title="Pendente"></i>;
       case 'EM_ANDAMENTO': return <i className="fas fa-spinner" style={{ color: '#3b82f6', fontSize: '14px' }} title="Em Andamento"></i>;
       case 'CANCELADA': return <i className="fas fa-ban" style={{ color: '#ef4444', fontSize: '14px' }} title="Cancelada"></i>;
@@ -696,26 +702,50 @@ function Task({ tarefa, onClick }) {
               {new Date(tarefa.data_prazo || tarefa.data_vencimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
             </span>
           )}
-          {tarefa.responsavel && (
-            <div 
-              title={tarefa.responsavel.nome}
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '50%',
-                background: '#e2e8f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '10px',
-                fontWeight: '600',
-                color: '#475569',
-                border: '1px solid #cbd5e1'
-              }}
-            >
-              {getInitials(tarefa.responsavel.nome)}
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+            {tarefa.responsaveis && tarefa.responsaveis.length > 0 ? (
+              tarefa.responsaveis.map((resp) => (
+                <div 
+                  key={resp.id}
+                  title={resp.nome}
+                  style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: '#e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '600',
+                    color: '#475569',
+                    border: '1px solid #cbd5e1'
+                  }}
+                >
+                  {getInitials(resp.nome)}
+                </div>
+              ))
+            ) : tarefa.responsavel ? (
+              <div 
+                title={tarefa.responsavel.nome}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  background: '#e2e8f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '10px',
+                  fontWeight: '600',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1'
+                }}
+              >
+                {getInitials(tarefa.responsavel.nome)}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

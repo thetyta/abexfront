@@ -45,8 +45,31 @@ export default function TaskDetailModal({ isOpen, onClose, tarefa, onEdit, onDel
 
           <div className="task-detail-meta">
             <div className="task-meta-item">
-              <span className="meta-label">Responsável:</span>
-              {tarefa.responsavel ? (
+              <span className="meta-label">Responsável(is):</span>
+              {tarefa.responsaveis && tarefa.responsaveis.length > 0 ? (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  {tarefa.responsaveis.map((resp) => (
+                    <div key={resp.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        background: '#e2e8f0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        color: '#475569',
+                        border: '1px solid #cbd5e1'
+                      }}>
+                        {resp.nome ? resp.nome.substring(0, 2).toUpperCase() : 'U'}
+                      </div>
+                      <span style={{ fontSize: '14px', color: '#334155' }}>{resp.nome}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : tarefa.responsavel ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{
                     width: '24px',

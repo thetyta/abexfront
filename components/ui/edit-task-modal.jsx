@@ -5,12 +5,14 @@ import { toaster } from './toaster'
 
 export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTaskUpdated }) {
   const [saving, setSaving] = useState(false)
+  const [colaboradores, setColaboradores] = useState([])
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
     coluna_id: '',
     prioridade: 'MEDIA',
-    data_prazo: ''
+    data_prazo: '',
+    responsaveis_ids: []
   })
 
   useEffect(() => {
@@ -20,10 +22,34 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
         descricao: tarefa.descricao || '',
         coluna_id: tarefa.coluna_id || (colunas && colunas.length > 0 ? colunas[0].id : ''),
         prioridade: tarefa.prioridade || 'MEDIA',
-        data_prazo: tarefa.data_prazo || ''
+        data_prazo: tarefa.data_prazo || '',
+        responsaveis_ids: tarefa.responsaveis && Array.isArray(tarefa.responsaveis) ? tarefa.responsaveis.map(r => r.id) : []
       })
     }
   }, [isOpen, tarefa, colunas])
+
+  useEffect(() => {
+    if (isOpen && tarefa) {
+      // Buscar colaboradores do projeto da tarefa
+      if (tarefa.projeto_id) {
+        fetch(`http://localhost:3333/projetos/${tarefa.projeto_id}`)
+          .then(res => res.json())
+          .then(data => {
+            const lista = []
+            if (data.responsavel) lista.push(data.responsavel)
+            if (data.colaboradores) {
+              data.colaboradores.forEach(c => {
+                if (!lista.find(l => l.id === c.id)) {
+                  lista.push(c)
+                }
+              })
+            }
+            setColaboradores(lista)
+          })
+          .catch(err => console.error('Erro ao buscar colaboradores:', err))
+      }
+    }
+  }, [isOpen, tarefa])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -48,7 +74,8 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
           descricao: formData.descricao,
           coluna_id: formData.coluna_id,
           prioridade: formData.prioridade,
-          data_prazo: formData.data_prazo || null
+          data_prazo: formData.data_prazo || null,
+          responsaveis_ids: formData.responsaveis_ids
         })
       })
 
@@ -160,6 +187,33 @@ export default function EditTaskModal({ isOpen, onClose, tarefa, colunas, onTask
               onChange={(e) => handleChange('data_prazo', e.target.value)}
               className="form-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label>Responsáveis</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f9fafb', minHeight: '40px' }}>
+              {colaboradores.length > 0 ? (
+                colaboradores.map(colab => (
+                  <label key={colab.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.responsaveis_ids.includes(colab.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({ ...prev, responsaveis_ids: [...prev.responsaveis_ids, colab.id] }))
+                        } else {
+                          setFormData(prev => ({ ...prev, responsaveis_ids: prev.responsaveis_ids.filter(id => id !== colab.id) }))
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    {colab.nome}
+                  </label>
+                ))
+              ) : (
+                <span style={{ color: '#94a3b8', fontSize: '14px' }}>Carregando responsáveis...</span>
+              )}
+            </div>
           </div>
 
           <div className="modal-actions">

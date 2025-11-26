@@ -70,10 +70,9 @@ export default function EditColumnModal({ isOpen, onClose, onUpdate, column }) {
               onChange={(e) => setColumnType(e.target.value)}
               className="form-select"
             >
-              <option value="PADRAO">Padrão (Sem alteração de status)</option>
               <option value="PENDENTE">Pendente</option>
               <option value="EM_ANDAMENTO">Em Andamento</option>
-              <option value="CONCLUSAO">Conclusão (Concluída)</option>
+              <option value="CONCLUIDA">Conclusão (Concluída)</option>
               <option value="CANCELADA">Cancelada</option>
             </select>
             <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>

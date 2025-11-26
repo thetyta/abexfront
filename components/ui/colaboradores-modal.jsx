@@ -8,9 +8,16 @@ export default function ColaboradoresModal({ isOpen, onClose, projetoId, colabor
   const [selectedUsuarios, setSelectedUsuarios] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [usuarioLogadoId, setUsuarioLogadoId] = useState(null)
 
   useEffect(() => {
     if (isOpen) {
+      // Obter ID do usuário logado
+      const usuarioLogadoStr = localStorage.getItem('usuarioLogado')
+      if (usuarioLogadoStr) {
+        const usuarioLogado = JSON.parse(usuarioLogadoStr)
+        setUsuarioLogadoId(usuarioLogado.id)
+      }
       fetchUsuarios()
     }
   }, [isOpen])
@@ -125,7 +132,9 @@ export default function ColaboradoresModal({ isOpen, onClose, projetoId, colabor
                     Nenhum usuário disponível
                   </div>
                 ) : (
-                  usuarios.map(usuario => {
+                  usuarios
+                    .filter(usuario => usuario.id !== usuarioLogadoId)
+                    .map(usuario => {
                     const jaEhColaborador = colaboradoresIds.includes(usuario.id)
                     const isSelected = selectedUsuarios.includes(usuario.id)
                     

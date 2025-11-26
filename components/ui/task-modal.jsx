@@ -12,7 +12,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
     coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
     prioridade: 'MEDIA',
     data_prazo: '',
-    responsavel_id: ''
+    responsaveis_ids: []
   }))
 
   // Fetch collaborators when modal opens
@@ -34,8 +34,8 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
           
           // Set default responsible to current user if they are in the list, otherwise the project responsible
           const usuarioLogado = JSON.parse(localStorage.getItem('usuarioLogado'))
-          if (usuarioLogado && !formData.responsavel_id) {
-             setFormData(prev => ({ ...prev, responsavel_id: usuarioLogado.id }))
+          if (usuarioLogado && formData.responsaveis_ids.length === 0) {
+             setFormData(prev => ({ ...prev, responsaveis_ids: [usuarioLogado.id] }))
           }
         })
         .catch(err => console.error('Erro ao buscar colaboradores:', err))
@@ -52,7 +52,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
       coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
       prioridade: 'MEDIA',
       data_prazo: '',
-      responsavel_id: usuarioLogado ? usuarioLogado.id : ''
+      responsaveis_ids: usuarioLogado ? [usuarioLogado.id] : []
     })
   }, [isOpen, colunaId, colunas])
 
@@ -81,7 +81,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
           coluna_id: formData.coluna_id,
           prioridade: formData.prioridade,
           data_prazo: formData.data_prazo || null,
-          responsavel_id: formData.responsavel_id,
+          responsaveis_ids: formData.responsaveis_ids.length > 0 ? formData.responsaveis_ids : [formData.responsaveis_ids[0]],
           posicao: 0,
           projeto_id: parseInt(projetoId)
         })
@@ -102,7 +102,7 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
         coluna_id: colunaId || (colunas && colunas.length > 0 ? colunas[0].id : ''),
         prioridade: 'MEDIA',
         data_prazo: '',
-        responsavel_id: ''
+        responsaveis_ids: []
       })
       
       if (onTaskCreated) {
@@ -204,20 +204,26 @@ export default function TaskModal({ isOpen, onClose, colunas, projetoId, colunaI
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="responsavel">Responsável</label>
-              <select
-                id="responsavel"
-                value={formData.responsavel_id}
-                onChange={(e) => handleChange('responsavel_id', e.target.value)}
-                className="form-select"
-              >
-                <option value="">Selecione um responsável</option>
+              <label>Responsáveis</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#f9fafb', minHeight: '40px' }}>
                 {colaboradores.map(colab => (
-                  <option key={colab.id} value={colab.id}>
+                  <label key={colab.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.responsaveis_ids.includes(colab.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({ ...prev, responsaveis_ids: [...prev.responsaveis_ids, colab.id] }))
+                        } else {
+                          setFormData(prev => ({ ...prev, responsaveis_ids: prev.responsaveis_ids.filter(id => id !== colab.id) }))
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
                     {colab.nome}
-                  </option>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
 
             <div className="form-group">
